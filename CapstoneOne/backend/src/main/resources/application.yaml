@@ -1,0 +1,110 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: CapstoneOne
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/capstone_one}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: true
+    locations: classpath:db/migration
+
+audit:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/capstone_one}
+    writer-username: ${AUDIT_DB_WRITER_USERNAME:capstone_audit_writer}
+    writer-password: ${AUDIT_DB_WRITER_PASSWORD}
+    reader-username: ${AUDIT_DB_READER_USERNAME:capstone_audit_reader}
+    reader-password: ${AUDIT_DB_READER_PASSWORD}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  active-key-id: ${JWT_ACTIVE_KEY_ID:primary}
+  previous-key-id: ${JWT_PREVIOUS_KEY_ID:}
+  previous-secret: ${JWT_PREVIOUS_SECRET:}
+  # Defaults to a 5-minute access token and a 16-hour-40-minute refresh idle lifetime.
+  expiration: ${JWT_EXPIRATION:5m}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:16h40m}
+  refresh-max-lifetime: ${JWT_REFRESH_MAX_LIFETIME:7d}
+  issuer: ${JWT_ISSUER:capstoneone}
+  access-audience: ${JWT_ACCESS_AUDIENCE:capstoneone-api}
+  refresh-audience: ${JWT_REFRESH_AUDIENCE:capstoneone-refresh}
+
+auth:
+  refresh-cookie:
+    secure: ${AUTH_REFRESH_COOKIE_SECURE:true}
+    same-site: ${AUTH_REFRESH_COOKIE_SAME_SITE:Lax}
+
+frontend:
+  allowed-origins: ${FRONTEND_ALLOWED_ORIGINS:http://localhost:3000}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      database:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 2
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - org.springframework.dao.DataAccessResourceFailureException
+    instances:
+      authenticationDatabase:
+        baseConfig: database
+      auditLogDatabase:
+        baseConfig: database
+
+app:
+  rate-limit:
+    retry-after: 60s
+    instances:
+      loginAccount:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      loginClientIp:
+        limitForPeriod: 30
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      authenticatedUser:
+        limitForPeriod: 120
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      authenticatedClientIp:
+        limitForPeriod: 300
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      authenticatedSensitive:
+        limitForPeriod: 30
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s
+      tokenEndpointClientIp:
+        limitForPeriod: 60
+        limitRefreshPeriod: 1m
+        timeoutDuration: 0s

@@ -1,0 +1,51 @@
+# Operating system files
+.DS_Store
+
+# Shared backend IntelliJ project files are allowed; user-specific files are ignored below.
+.idea/
+!CapstoneOne/backend/.idea/
+!CapstoneOne/backend/.idea/**
+
+# Backend build output and downloaded Maven wrapper
+/CapstoneOne/backend/target/
+/CapstoneOne/backend/.mvn/wrapper/maven-wrapper.jar
+/CapstoneOne/backend/HELP.md
+
+# Frontend dependencies, build output, and local environment files
+/CapstoneOne/frontend/node_modules/
+/CapstoneOne/frontend/dist/
+/CapstoneOne/frontend/build/
+/CapstoneOne/frontend/.env
+/CapstoneOne/frontend/.env.*
+!/CapstoneOne/frontend/.env.example
+
+# Java and IDE metadata
+*.class
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+*.iml
+.vscode/
+
+# User-specific IntelliJ settings
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+**/.idea/usage.statistics.xml
+**/.idea/shelf/
+**/.idea/dictionaries/
+
+# Other build tools
+/CapstoneOne/build/
+/CapstoneOne/dist/
+/CapstoneOne/nbbuild/
+/CapstoneOne/nbdist/
+/CapstoneOne/nbproject/private/
+/CapstoneOne/.nb-gradle/
+
+/CapstoneOne/backend/logs/
+/CapstoneOne/logs
+.project
