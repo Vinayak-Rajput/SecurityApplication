@@ -1,6 +1,6 @@
 package com.hdfclife.capstoneone.common.config;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
 import com.hdfclife.capstoneone.common.config.properties.MainDataSourceProperties;
 import com.hdfclife.capstoneone.user.entity.User;
 import com.zaxxer.hikari.HikariDataSource;
@@ -44,7 +44,7 @@ public class UserDataSourceConfig {
     ) {
         return builder
                 .dataSource(dataSource)
-                .packages(User.class, AuthSession.class)
+                .packages(User.class, Authentication.class)
                 .persistenceUnit("application")
                 .properties(Map.of(
                         "hibernate.hbm2ddl.auto", "validate",

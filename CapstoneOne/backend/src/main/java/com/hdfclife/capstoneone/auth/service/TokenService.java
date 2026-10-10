@@ -1,7 +1,7 @@
 package com.hdfclife.capstoneone.auth.service;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
-import com.hdfclife.capstoneone.auth.repository.AuthSessionRepository;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
+import com.hdfclife.capstoneone.auth.repository.AuthenticationSessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,13 +15,13 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TokenService {
 
-    private final AuthSessionRepository authSessionRepository;
+    private final AuthenticationSessionRepository authenticationSessionRepository;
 
     @Transactional
     public void saveSession(UUID sessionId, String username, String accessTokenId, String refreshTokenHash,
                             Instant accessTokenExpiresAt, Instant refreshTokenExpiresAt,
                             Instant refreshSessionExpiresAt) {
-        AuthSession session = new AuthSession();
+        Authentication session = new Authentication();
 
         session.setId(sessionId);
         session.setUsername(username);
@@ -32,13 +32,13 @@ public class TokenService {
         session.setRefreshSessionExpiresAt(refreshSessionExpiresAt);
         session.setRevoked(false);
 
-        authSessionRepository.save(session);
+        authenticationSessionRepository.save(session);
     }
 
     @Transactional(readOnly = true)
     public boolean isAccessTokenActive(UUID sessionId, String accessTokenId) {
         Instant now = Instant.now();
-        return authSessionRepository.existsByIdAndRevokedFalseAndAccessTokenExpiresAtAfterAndRefreshSessionExpiresAtAfterAndAccessTokenId(
+        return authenticationSessionRepository.existsByIdAndRevokedFalseAndAccessTokenExpiresAtAfterAndRefreshSessionExpiresAtAfterAndAccessTokenId(
                 sessionId,
                 now,
                 now,
@@ -51,7 +51,7 @@ public class TokenService {
                                 Instant newAccessTokenExpiresAt, String newRefreshTokenHash,
                                 Instant newRefreshTokenExpiresAt, Instant refreshSessionExpiresAt) {
         // Hold a write lock across verification and replacement so only one concurrent refresh can rotate a session.
-        AuthSession session = authSessionRepository.findAuthSessionById(sessionId).orElse(null);
+        Authentication session = authenticationSessionRepository.findAuthSessionById(sessionId).orElse(null);
 
         Instant now = Instant.now();
         if (session == null || session.isRevoked()
@@ -81,7 +81,7 @@ public class TokenService {
 
     @Transactional
     public boolean revokeSession(UUID sessionId, String accessTokenId) {
-        AuthSession session = authSessionRepository.findAuthSessionById(sessionId).orElse(null);
+        Authentication session = authenticationSessionRepository.findAuthSessionById(sessionId).orElse(null);
 
         if (session == null || session.isRevoked() || !session.getAccessTokenId().equals(accessTokenId) || !session.getAccessTokenExpiresAt().isAfter(Instant.now())) {
             return false;
@@ -94,7 +94,7 @@ public class TokenService {
     @Transactional
     public boolean revokeRefreshSession(UUID sessionId, String presentedRefreshTokenHash) {
         // Lock before checking the hash so logout cannot race a refresh rotation and revoke a different token state.
-        AuthSession session = authSessionRepository.findAuthSessionById(sessionId).orElse(null);
+        Authentication session = authenticationSessionRepository.findAuthSessionById(sessionId).orElse(null);
 
         Instant now = Instant.now();
         if (session == null || session.isRevoked()
@@ -117,12 +117,12 @@ public class TokenService {
 
     @Transactional
     public int revokeAllSessions(String username) {
-        return authSessionRepository.revokeAllActiveByUsername(username);
+        return authenticationSessionRepository.revokeAllActiveByUsername(username);
     }
 
     @Transactional
     public int deleteRevokedOrExpiredSessions(Instant now) {
-        return authSessionRepository.deleteRevokedOrExpired(now);
+        return authenticationSessionRepository.deleteRevokedOrExpired(now);
     }
 
 }

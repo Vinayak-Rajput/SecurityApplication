@@ -1,6 +1,6 @@
 package com.hdfclife.capstoneone.auth.repository;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -14,7 +14,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface AuthSessionRepository extends JpaRepository<AuthSession, UUID> {
+public interface AuthenticationSessionRepository extends JpaRepository<Authentication, UUID> {
 
     boolean existsByIdAndRevokedFalseAndAccessTokenExpiresAtAfterAndRefreshSessionExpiresAtAfterAndAccessTokenId(
             UUID id,
@@ -23,10 +23,10 @@ public interface AuthSessionRepository extends JpaRepository<AuthSession, UUID> 
             String accessTokenId
     );
 
-    Slice<AuthSession> findAllByIdIsNotNull(Pageable pageable);
+    Slice<Authentication> findAllByIdIsNotNull(Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<AuthSession> findAuthSessionById(UUID id);
+    Optional<Authentication> findAuthSessionById(UUID id);
 
     @Modifying
     @Query("update AuthSession session set session.revoked = true where session.username = ?1 and session.revoked = false")

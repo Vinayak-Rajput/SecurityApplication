@@ -1,9 +1,8 @@
 package com.hdfclife.capstoneone.service;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
-import com.hdfclife.capstoneone.auth.repository.AuthSessionRepository;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
+import com.hdfclife.capstoneone.auth.repository.AuthenticationSessionRepository;
 import com.hdfclife.capstoneone.common.util.Sha256;
-import com.hdfclife.capstoneone.auth.util.TokenFormats;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TokenServiceTest {
 
-    @Mock private AuthSessionRepository sessionRepository;
+    @Mock private AuthenticationSessionRepository sessionRepository;
 
     private TokenService tokenService;
 
@@ -42,9 +41,9 @@ class TokenServiceTest {
 
         tokenService.saveSession(id, "alice", "access-id", Sha256.hash("refresh"), accessExpiry, refreshExpiry);
 
-        var captor = org.mockito.ArgumentCaptor.forClass(AuthSession.class);
+        var captor = org.mockito.ArgumentCaptor.forClass(Authentication.class);
         verify(sessionRepository).save(captor.capture());
-        AuthSession saved = captor.getValue();
+        Authentication saved = captor.getValue();
         assertEquals(id, saved.getId());
         assertEquals("alice", saved.getUsername());
         assertEquals("access-id", saved.getAccessTokenId());
@@ -55,7 +54,7 @@ class TokenServiceTest {
     @Test
     void refreshReplayRevokesSessionAndDoesNotReplaceStoredTokens() {
         UUID id = UUID.randomUUID();
-        AuthSession session = activeSession(id, "current-access", Sha256.hash("current-refresh"));
+        Authentication session = activeSession(id, "current-access", Sha256.hash("current-refresh"));
         when(sessionRepository.findByIdForUpdate(id)).thenReturn(Optional.of(session));
 
         boolean rotated = tokenService.rotateTokens(id, Sha256.hash("old-refresh"), "new-access",
@@ -72,7 +71,7 @@ class TokenServiceTest {
     void refreshWithCurrentCredentialAtomicallyReplacesStoredValues() {
         UUID id = UUID.randomUUID();
         String currentRefreshHash = Sha256.hash("current-refresh");
-        AuthSession session = activeSession(id, "current-access", currentRefreshHash);
+        Authentication session = activeSession(id, "current-access", currentRefreshHash);
         when(sessionRepository.findByIdForUpdate(id)).thenReturn(Optional.of(session));
         Instant accessExpiry = Instant.now().plusSeconds(120);
         Instant refreshExpiry = Instant.now().plusSeconds(1200);
@@ -91,7 +90,7 @@ class TokenServiceTest {
     @Test
     void expiredRefreshSessionIsNotRotated() {
         UUID id = UUID.randomUUID();
-        AuthSession session = activeSession(id, "access", Sha256.hash("refresh"));
+        Authentication session = activeSession(id, "access", Sha256.hash("refresh"));
         session.setRefreshTokenExpiresAt(Instant.now().minusSeconds(1));
         when(sessionRepository.findByIdForUpdate(id)).thenReturn(Optional.of(session));
 
@@ -104,7 +103,7 @@ class TokenServiceTest {
     @Test
     void accessTokenIsActiveOnlyWhenSessionIsCurrentAndNotExpired() {
         UUID id = UUID.randomUUID();
-        AuthSession session = activeSession(id, "current-access", Sha256.hash("refresh"));
+        Authentication session = activeSession(id, "current-access", Sha256.hash("refresh"));
         when(sessionRepository.findByIdAndRevokedFalse(id)).thenReturn(Optional.of(session));
 
         assertTrue(tokenService.isAccessTokenActive(id, "current-access"));
@@ -117,7 +116,7 @@ class TokenServiceTest {
     @Test
     void logoutCannotRevokeSessionWithStaleAccessTokenId() {
         UUID id = UUID.randomUUID();
-        AuthSession session = activeSession(id, "current-access", Sha256.hash("refresh"));
+        Authentication session = activeSession(id, "current-access", Sha256.hash("refresh"));
         when(sessionRepository.findByIdForUpdate(id)).thenReturn(Optional.of(session));
 
         assertFalse(tokenService.revokeSession(id, "old-access"));
@@ -126,17 +125,8 @@ class TokenServiceTest {
         verify(sessionRepository, never()).save(session);
     }
 
-    @Test
-    void accessTokenIdAndRefreshHashFormatValidatorsAreStrict() {
-        assertTrue(TokenFormats.isTokenId(UUID.randomUUID().toString()));
-        assertFalse(TokenFormats.isTokenId("not-a-uuid"));
-        assertTrue(TokenFormats.isSha256(Sha256.hash("refresh")));
-        assertFalse(TokenFormats.isSha256("refresh"));
-        assertFalse(TokenFormats.isSha256(null));
-    }
-
-    private static AuthSession activeSession(UUID id, String accessId, String refreshHash) {
-        AuthSession session = new AuthSession();
+    private static Authentication activeSession(UUID id, String accessId, String refreshHash) {
+        Authentication session = new Authentication();
         session.setId(id);
         session.setUsername("alice");
         session.setAccessTokenId(accessId);

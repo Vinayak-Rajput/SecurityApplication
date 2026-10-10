@@ -1,9 +1,9 @@
 package com.hdfclife.capstoneone.auth.service;
 
-import com.hdfclife.capstoneone.auth.dto.AuthResponse;
-import com.hdfclife.capstoneone.auth.dto.IssuedTokens;
+import com.hdfclife.capstoneone.auth.dto.AuthenticationResponse;
 import com.hdfclife.capstoneone.auth.dto.LoginRequest;
-import com.hdfclife.capstoneone.common.dto.MessageResponse;
+import com.hdfclife.capstoneone.auth.dto.LogoutResponse;
+import com.hdfclife.capstoneone.auth.dto.SignupResponse;
 import com.hdfclife.capstoneone.auth.exception.InactiveTokenException;
 import com.hdfclife.capstoneone.auth.exception.InvalidCredentialsException;
 import com.hdfclife.capstoneone.auth.exception.InvalidTokenException;
@@ -22,7 +22,10 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthenticationService {
+
+    public record IssuedTokens(String accessToken, String refreshToken) {
+    }
 
     private final JwtService jwtService;
     private final TokenService tokenService;
@@ -31,10 +34,12 @@ public class AuthService {
     private final ApplicationLogger applicationLogger;
 
     public IssuedTokens login(LoginRequest request, String clientIp) {
+
         return authenticate(request);
     }
 
     private IssuedTokens authenticate(LoginRequest request) {
+
         String username = UserIdentityNormalizer.username(request.getUsername());
         String password = request.getPassword();
 
@@ -49,44 +54,55 @@ public class AuthService {
         Instant sessionExpiresAt = jwtService.newSessionExpiration();
         String token = jwtService.generateToken(user.getUsername(), sessionId, sessionExpiresAt);
         String refreshToken = jwtService.generateRefreshToken(user.getUsername(), sessionId, sessionExpiresAt);
+
         JwtService.TokenDetails accessDetails = jwtService.parseToken(token);
         JwtService.TokenDetails refreshDetails = jwtService.parseToken(refreshToken);
 
         tokenService.saveSession(
-                sessionId,
-                user.getUsername(),
-                accessDetails.tokenId(),
-                Sha256.hash(refreshToken),
-                accessDetails.expiresAt(),
-                refreshDetails.expiresAt(),
-                sessionExpiresAt
+            sessionId,
+            user.getUsername(),
+            accessDetails.tokenId(),
+            Sha256.hash(refreshToken),
+            accessDetails.expiresAt(),
+            refreshDetails.expiresAt(),
+            sessionExpiresAt
         );
 
         applicationLogger.log(
-                AuditEvent.authentication(
-                        AuditEventType.LOGIN_SUCCESS,
-                        user.getUsername(),
-                        "User login successful")
+            AuditEvent.authentication(
+                AuditEventType.LOGIN_SUCCESS,
+                user.getUsername(),
+                "User login successful"
+            )
         );
 
         return new IssuedTokens(token, refreshToken);
     }
 
-    public AuthResponse validateToken(String token) {
+    public AuthenticationResponse validateToken(String token) {
+
         JwtService.TokenDetails tokenDetails = jwtService.parseToken(token);
         String username = tokenDetails.username();
-        applicationLogger.log(AuditEvent.authentication(
-                AuditEventType.TOKEN_VALIDATION_SUCCESS, username, "Token validation successful"));
 
-        return new AuthResponse("Authentication successful", username, true);
+        applicationLogger.log(
+            AuditEvent.authentication(
+                AuditEventType.TOKEN_VALIDATION_SUCCESS,
+                username,
+                "Token validation successful"
+            )
+        );
+
+        return new AuthenticationResponse("Authentication successful", username, true);
     }
 
     public IssuedTokens refresh(String refreshToken) {
+
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new InvalidTokenException("Refresh token must not be empty");
         }
 
         JwtService.TokenDetails presentedToken = jwtService.parseToken(refreshToken);
+
         if (!presentedToken.refreshToken()) {
             throw new InvalidTokenException("Token is not a refresh token");
         }
@@ -94,72 +110,89 @@ public class AuthService {
         UUID sessionId = presentedToken.sessionId();
         String username = presentedToken.username();
         Instant sessionExpiresAt = presentedToken.sessionExpiresAt();
+
         if (userRepository.findByUsernameAndEnabledTrueAndLockedFalse(username).isEmpty()) {
             throw new InactiveTokenException("Refresh token is inactive. Please login again.");
         }
 
         String newAccessToken = jwtService.generateToken(username, sessionId, sessionExpiresAt);
         String newRefreshToken = jwtService.generateRefreshToken(username, sessionId, sessionExpiresAt);
+
         JwtService.TokenDetails accessDetails = jwtService.parseToken(newAccessToken);
         JwtService.TokenDetails refreshDetails = jwtService.parseToken(newRefreshToken);
 
         boolean rotated = tokenService.rotateTokens(
-                sessionId,
-                Sha256.hash(refreshToken),
-                accessDetails.tokenId(),
-                accessDetails.expiresAt(),
-                Sha256.hash(newRefreshToken),
-                refreshDetails.expiresAt(),
-                sessionExpiresAt
+            sessionId,
+            Sha256.hash(refreshToken),
+            accessDetails.tokenId(),
+            accessDetails.expiresAt(),
+            Sha256.hash(newRefreshToken),
+            refreshDetails.expiresAt(),
+            sessionExpiresAt
         );
 
         if (!rotated) {
             throw new InactiveTokenException("Refresh token is inactive. Please login again.");
         }
 
-        applicationLogger.log(AuditEvent.authentication(
-                AuditEventType.TOKEN_REFRESH_SUCCESS, username, "Access token refreshed successfully"));
+        applicationLogger.log(
+            AuditEvent.authentication(
+                AuditEventType.TOKEN_REFRESH_SUCCESS,
+                username,
+                "Access token refreshed successfully"
+            )
+        );
 
         return new IssuedTokens(newAccessToken, newRefreshToken);
     }
 
-    public MessageResponse logout(String token) {
+    public LogoutResponse logout(String token) {
+
         JwtService.TokenDetails tokenDetails = jwtService.parseToken(token);
+
         if (tokenDetails.refreshToken()) {
             throw new InvalidTokenException("Token is not an access token");
         }
 
-        if (!tokenService.revokeSession(
-                tokenDetails.sessionId(),
-                tokenDetails.tokenId()
-        )) {
+        if (!tokenService.revokeSession(tokenDetails.sessionId(), tokenDetails.tokenId())) {
             throw new InactiveTokenException("Token is already inactive");
         }
-        applicationLogger.log(AuditEvent.authentication(
-                AuditEventType.LOGOUT_SUCCESS, tokenDetails.username(), "User logout successful"));
 
-        return new MessageResponse("Logged out successfully");
+        applicationLogger.log(
+            AuditEvent.authentication(
+                AuditEventType.LOGOUT_SUCCESS,
+                tokenDetails.username(),
+                "User logout successful"
+            )
+        );
+
+        return new LogoutResponse("Logged out successfully");
     }
 
-    public MessageResponse logoutRefresh(String refreshToken) {
+    public LogoutResponse logoutRefresh(String refreshToken) {
+
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new InvalidTokenException("Refresh token must not be empty");
         }
 
         JwtService.TokenDetails tokenDetails = jwtService.parseToken(refreshToken);
+
         if (!tokenDetails.refreshToken()) {
             throw new InvalidTokenException("Token is not a refresh token");
         }
 
-        if (!tokenService.revokeRefreshSession(
-                tokenDetails.sessionId(),
-                Sha256.hash(refreshToken)
-        )) {
+        if (!tokenService.revokeRefreshSession(tokenDetails.sessionId(), Sha256.hash(refreshToken))) {
             throw new InactiveTokenException("Refresh token is already inactive");
         }
 
-        applicationLogger.log(AuditEvent.authentication(
-                AuditEventType.LOGOUT_SUCCESS, tokenDetails.username(), "User logout successful"));
-        return new MessageResponse("Logged out successfully");
+        applicationLogger.log(
+            AuditEvent.authentication(
+                AuditEventType.LOGOUT_SUCCESS,
+                tokenDetails.username(),
+                "User logout successful"
+            )
+        );
+
+        return new LogoutResponse("Logged out successfully");
     }
 }

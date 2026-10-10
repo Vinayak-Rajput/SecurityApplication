@@ -15,9 +15,7 @@ import com.hdfclife.capstoneone.common.validation.MaxUtf8Bytes;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(
-        name = "SignupRequest",
-        description = "Payload used to register a new user"
+@Schema(name = "SignupRequest", description = "Payload used to register a new user"
 )
 public class SignupRequest {
 

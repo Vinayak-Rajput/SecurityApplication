@@ -13,22 +13,13 @@ import lombok.Setter;
 @Schema(name = "LoginResponse", description = "Successful auth payload containing the access JWT")
 public class LoginResponse {
 
-    @Schema(
-            description = "Human-readable status message",
-            example = "Login successful"
-    )
+    @Schema(description = "Human-readable status message", example = "Login successful")
     private String message;
 
-    @Schema(
-            description = "JWT access token",
-            example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.signature"
-    )
+    @Schema(description = "JWT access token", example = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.signature")
     private String token;
 
-    @Schema(
-            description = "Token type for the Authorization header",
-            example = "Bearer"
-    )
+    @Schema(description = "Token type for the Authorization header", example = "Bearer")
     private String tokenType;
 
 }

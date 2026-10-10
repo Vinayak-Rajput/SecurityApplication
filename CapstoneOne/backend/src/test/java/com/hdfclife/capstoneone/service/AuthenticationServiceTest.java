@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class AuthServiceTest {
+class AuthenticationServiceTest {
 
     @Mock private JwtService jwtService;
     @Mock private TokenService tokenService;

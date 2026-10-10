@@ -1,6 +1,6 @@
 package com.hdfclife.capstoneone.repository;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-class AuthSessionRepositoryTest {
+class AuthenticationRepositoryTest {
 
     @Autowired
     private TestEntityManager entityManager;
@@ -22,17 +22,17 @@ class AuthSessionRepositoryTest {
     @Autowired
     private AuthSessionRepository authSessionRepository;
 
-    private AuthSession activeSession;
-    private AuthSession revokedSession;
+    private Authentication activeSession;
+    private Authentication revokedSession;
 
     @BeforeEach
     void setUp() {
-        activeSession = new AuthSession();
+        activeSession = new Authentication();
         activeSession.setUsername("alice");
         activeSession.setRevoked(false);
         activeSession.setCreatedAt(OffsetDateTime.now().toInstant());
 
-        revokedSession = new AuthSession();
+        revokedSession = new Authentication();
         revokedSession.setUsername("alice");
         revokedSession.setRevoked(true);
         revokedSession.setCreatedAt(OffsetDateTime.now().toInstant());
@@ -45,7 +45,7 @@ class AuthSessionRepositoryTest {
     @Test
     @DisplayName("findByIdAndRevokedFalse should return session when present and active")
     void findByIdAndRevokedFalseReturnsActiveSession() {
-        Optional<AuthSession> found = authSessionRepository.findByIdAndRevokedFalse(activeSession.getId());
+        Optional<Authentication> found = authSessionRepository.findByIdAndRevokedFalse(activeSession.getId());
 
         assertTrue(found.isPresent());
         assertEquals(activeSession.getId(), found.get().getId());
@@ -55,7 +55,7 @@ class AuthSessionRepositoryTest {
     @Test
     @DisplayName("findByIdAndRevokedFalse should return empty when session is revoked")
     void findByIdAndRevokedFalseReturnsEmptyWhenRevoked() {
-        Optional<AuthSession> found = authSessionRepository.findByIdAndRevokedFalse(revokedSession.getId());
+        Optional<Authentication> found = authSessionRepository.findByIdAndRevokedFalse(revokedSession.getId());
 
         assertTrue(found.isEmpty());
     }
@@ -63,7 +63,7 @@ class AuthSessionRepositoryTest {
     @Test
     @DisplayName("findByIdForUpdate should retrieve session with pessimistic lock query")
     void findByIdForUpdateReturnsSession() {
-        Optional<AuthSession> found = authSessionRepository.findByIdForUpdate(activeSession.getId());
+        Optional<Authentication> found = authSessionRepository.findByIdForUpdate(activeSession.getId());
 
         assertTrue(found.isPresent());
         assertEquals("alice", found.get().getUsername());
@@ -73,7 +73,7 @@ class AuthSessionRepositoryTest {
     @DisplayName("revokeAllActiveByUsername should update only active sessions for the user")
     void revokeAllActiveByUsernameRevokesOnlyActive() {
         // Create another active session for a different user
-        AuthSession bobSession = new AuthSession();
+        Authentication bobSession = new Authentication();
         bobSession.setUsername("bob");
         bobSession.setRevoked(false);
         bobSession.setCreatedAt(OffsetDateTime.now().toInstant());
@@ -87,8 +87,8 @@ class AuthSessionRepositoryTest {
 
         entityManager.clear(); // Clear persistence context to fetch updated state from DB
 
-        AuthSession reloadedAliceActive = entityManager.find(AuthSession.class, activeSession.getId());
-        AuthSession reloadedBobSession = entityManager.find(AuthSession.class, bobSession.getId());
+        Authentication reloadedAliceActive = entityManager.find(Authentication.class, activeSession.getId());
+        Authentication reloadedBobSession = entityManager.find(Authentication.class, bobSession.getId());
 
         assertTrue(reloadedAliceActive.isRevoked());
         assertFalse(reloadedBobSession.isRevoked());

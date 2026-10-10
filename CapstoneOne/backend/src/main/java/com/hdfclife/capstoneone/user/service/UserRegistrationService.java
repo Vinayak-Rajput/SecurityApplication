@@ -1,6 +1,6 @@
 package com.hdfclife.capstoneone.user.service;
 
-import com.hdfclife.capstoneone.common.dto.MessageResponse;
+import com.hdfclife.capstoneone.auth.dto.SignupResponse;
 import com.hdfclife.capstoneone.auth.dto.SignupRequest;
 import com.hdfclife.capstoneone.user.entity.User;
 import com.hdfclife.capstoneone.user.exception.DuplicateUserException;
@@ -26,7 +26,7 @@ public class UserRegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationLogger applicationLogger;
 
-    public MessageResponse register(SignupRequest request) {
+    public SignupResponse register(SignupRequest request) {
         User user = createUser(request.getUsername(), request.getEmail(), request.getPassword(), "USER");
 
         applicationLogger.log(AuditEvent.request(
@@ -39,7 +39,7 @@ public class UserRegistrationService {
                 "Public signup completed"
         ));
 
-        return new MessageResponse("Account created successfully");
+        return new SignupResponse("Account created successfully");
     }
 
     public User createAdminManagedUser(String username, String email, String password, String role) {

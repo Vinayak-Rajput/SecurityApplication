@@ -7,7 +7,7 @@ import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AuthSessionUnitTest {
+class AuthenticationUnitTest {
 
     @Test
     @DisplayName("onCreate should initialize createdAt and updatedAt timestamps")

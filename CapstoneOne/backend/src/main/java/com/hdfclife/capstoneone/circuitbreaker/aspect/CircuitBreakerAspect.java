@@ -18,10 +18,10 @@ public class CircuitBreakerAspect {
     private final CircuitBreakerRegistry circuitBreakerRegistry;
 
     // Keep database protection centralized while applying separate breaker state to each datasource.
-    @Around("execution(* com.hdfclife.capstoneone.auth.service.AuthService.login(..)) || " +
-            "execution(* com.hdfclife.capstoneone.auth.service.AuthService.refresh(..)) || " +
-            "execution(* com.hdfclife.capstoneone.auth.service.AuthService.logout(..)) || " +
-            "execution(* com.hdfclife.capstoneone.auth.service.AuthService.logoutRefresh(..)) || " +
+    @Around("execution(* com.hdfclife.capstoneone.auth.service.AuthenticationService.login(..)) || " +
+            "execution(* com.hdfclife.capstoneone.auth.service.AuthenticationService.refresh(..)) || " +
+            "execution(* com.hdfclife.capstoneone.auth.service.AuthenticationService.logout(..)) || " +
+            "execution(* com.hdfclife.capstoneone.auth.service.AuthenticationService.logoutRefresh(..)) || " +
             "execution(* com.hdfclife.capstoneone.user.service.UserService.getAllUsers(..)) || " +
             "execution(* com.hdfclife.capstoneone.user.service.UserService.getUser(..)) || " +
             "execution(* com.hdfclife.capstoneone.user.service.UserService.getUserByUsername(..)) || " +

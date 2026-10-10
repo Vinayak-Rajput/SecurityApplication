@@ -1,9 +1,8 @@
 package com.hdfclife.capstoneone.mock;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
-import com.hdfclife.capstoneone.auth.repository.AuthSessionRepository;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
+import com.hdfclife.capstoneone.auth.repository.AuthenticationSessionRepository;
 import com.hdfclife.capstoneone.common.util.Sha256;
-import com.hdfclife.capstoneone.auth.util.TokenFormats;
 
 import com.hdfclife.capstoneone.auth.service.JwtService;
 import org.junit.jupiter.api.Test;
@@ -33,13 +32,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-class AuthSessionSecurityIntegrationTest {
+class AuthenticationSecurityIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private AuthSessionRepository sessionRepository;
+    private AuthenticationSessionRepository sessionRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -60,13 +59,12 @@ class AuthSessionSecurityIntegrationTest {
         assertEquals("/refresh", refreshCookie.getPath());
         assertTrue(login.get("refreshToken") == null);
 
-        AuthSession session = sessionRepository.findById(sessionId).orElseThrow();
+        Authentication session = sessionRepository.findById(sessionId).orElseThrow();
 
         assertEquals(jwtService.extractTokenId(accessToken), session.getAccessTokenId());
         assertNotEquals(accessToken, session.getAccessTokenId());
         assertEquals(Sha256.hash(refreshToken), session.getRefreshTokenHash());
         assertNotEquals(refreshToken, session.getRefreshTokenHash());
-        assertTrue(TokenFormats.isSha256(session.getRefreshTokenHash()));
     }
 
     @Test

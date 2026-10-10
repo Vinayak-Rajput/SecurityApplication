@@ -37,20 +37,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+
         return "POST".equals(request.getMethod())
-                && ("/logout".equals(request.getServletPath())
-                || request.getServletPath().startsWith("/refresh"));
+            && ("/logout".equals(request.getServletPath())
+            || request.getServletPath().startsWith("/refresh"));
     }
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null) {
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -60,7 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             jwt = bearerTokenResolver.resolve(authHeader);
         }
+
         catch (InvalidAuthorizationHeaderException exception) {
+
             SecurityContextHolder.clearContext();
             reject(request, response, exception.getMessage());
 
@@ -70,19 +71,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final JwtService.TokenDetails tokenDetails;
 
         try {
+
             tokenDetails = jwtService.parseToken(jwt);
+
             if (tokenDetails.refreshToken()) {
                 reject(request, response, "Invalid or expired token.");
                 return;
             }
         }
+
         catch (AuthenticationException exception) {
+
             SecurityContextHolder.clearContext();
             reject(request, response, "Authentication failed.");
 
             return;
         }
+
         catch (InvalidTokenException | JwtException | IllegalArgumentException exception) {
+
             SecurityContextHolder.clearContext();
             reject(request, response, "Invalid or expired token.");
 
@@ -90,10 +97,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
+
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
+
                 Optional<UserDetails> activeUser = accessTokenAuthenticationService.loadActiveUser(tokenDetails);
 
                 if (activeUser.isEmpty()) {
+
                     SecurityContextHolder.clearContext();
                     reject(request, response, "Token is inactive.");
 
@@ -101,31 +111,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 UserDetails userDetails = activeUser.get();
+
                 if (!tokenDetails.username().equals(userDetails.getUsername())) {
+
                     SecurityContextHolder.clearContext();
                     reject(request, response, "Invalid or expired token.");
 
                     return;
                 }
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                 authToken.setDetails(new WebAuthenticationDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
+
         catch (CallNotPermittedException | DataAccessResourceFailureException exception) {
+
             SecurityContextHolder.clearContext();
             securityUnavailable(request, response, exception);
 
             return;
         }
+
         catch (AuthenticationException exception) {
+
             SecurityContextHolder.clearContext();
             reject(request, response, "Authentication failed.");
 
             return;
         }
+
         catch (InvalidTokenException | JwtException | IllegalArgumentException exception) {
+
             SecurityContextHolder.clearContext();
             reject(request, response, "Invalid or expired token.");
 
@@ -135,13 +154,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void reject(HttpServletRequest request, HttpServletResponse response, String message)
-            throws IOException, ServletException {
+    private void reject(HttpServletRequest request, HttpServletResponse response, String message) throws IOException {
+
         securityExceptionHandler.commence(request, response, new BadCredentialsException(message));
     }
 
-    private void securityUnavailable(HttpServletRequest request, HttpServletResponse response, Exception exception)
-            throws IOException {
+    private void securityUnavailable(HttpServletRequest request, HttpServletResponse response, Exception exception) throws IOException {
+
         securityExceptionHandler.serviceUnavailable(request, response, exception);
     }
 }

@@ -22,20 +22,20 @@ public class RateLimitingAspect {
 
     private final RateLimitService rateLimitService;
 
-    @Around("execution(* com.hdfclife.capstoneone.auth.service.AuthService.login(..))")
+    @Around("execution(* com.hdfclife.capstoneone.auth.service.AuthenticationService.login(..))")
     public Object limitLoginAttempts(ProceedingJoinPoint invocation) throws Throwable {
         Object[] arguments = invocation.getArgs();
         if (arguments.length != 2 || !(arguments[0] instanceof LoginRequest request)
                 || !(arguments[1] instanceof String clientIp)) {
-            throw new IllegalStateException("AuthService.login must accept a LoginRequest and client IP");
+            throw new IllegalStateException("AuthenticationService.login must accept a LoginRequest and client IP");
         }
 
         return rateLimitService.limitLogin(request.getUsername(), clientIp, invocation::proceed);
     }
 
-    @Around("execution(* com.hdfclife.capstoneone.auth.controller.AuthController.refresh(..)) || " +
-            "execution(* com.hdfclife.capstoneone.auth.controller.AuthController.logout(..)) || " +
-            "execution(* com.hdfclife.capstoneone.auth.controller.AuthController.logoutWithRefreshToken(..))")
+    @Around("execution(* com.hdfclife.capstoneone.auth.controller.AuthenticationController.refresh(..)) || " +
+            "execution(* com.hdfclife.capstoneone.auth.controller.AuthenticationController.logout(..)) || " +
+            "execution(* com.hdfclife.capstoneone.auth.controller.AuthenticationController.logoutWithRefreshToken(..))")
     public Object limitTokenEndpointRequests(ProceedingJoinPoint invocation) throws Throwable {
         rateLimitService.limitTokenEndpoint(currentRequest().getRemoteAddr());
         return invocation.proceed();

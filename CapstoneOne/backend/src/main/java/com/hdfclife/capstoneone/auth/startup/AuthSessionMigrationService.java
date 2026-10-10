@@ -1,9 +1,8 @@
 package com.hdfclife.capstoneone.auth.startup;
 
-import com.hdfclife.capstoneone.auth.entity.AuthSession;
-import com.hdfclife.capstoneone.auth.repository.AuthSessionRepository;
+import com.hdfclife.capstoneone.auth.entity.Authentication;
+import com.hdfclife.capstoneone.auth.repository.AuthenticationSessionRepository;
 import com.hdfclife.capstoneone.common.util.Sha256;
-import com.hdfclife.capstoneone.auth.util.TokenFormats;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -12,24 +11,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AuthSessionMigrationService {
 
     private static final int BATCH_SIZE = 500;
+    private static final Pattern SHA_256_PATTERN = Pattern.compile("[0-9a-f]{64}");
 
-    private final AuthSessionRepository authSessionRepository;
+    private final AuthenticationSessionRepository authenticationSessionRepository;
 
     @Transactional
     public MigrationBatch migrateBatch(int pageNumber) {
-        Slice<AuthSession> sessions = authSessionRepository.findAllByIdIsNotNull(
+        Slice<Authentication> sessions = authenticationSessionRepository.findAllByIdIsNotNull(
                 PageRequest.of(pageNumber, BATCH_SIZE, Sort.by("id").ascending()));
         int migrated = 0;
 
-        for (AuthSession session : sessions) {
-            if (TokenFormats.isTokenId(session.getAccessTokenId())
-                    && TokenFormats.isSha256(session.getRefreshTokenHash())) {
+        for (Authentication session : sessions) {
+            if (isTokenId(session.getAccessTokenId())
+                    && isSha256(session.getRefreshTokenHash())) {
                 continue;
             }
 
@@ -41,9 +42,25 @@ public class AuthSessionMigrationService {
         }
 
         if (migrated > 0) {
-            authSessionRepository.flush();
+            authenticationSessionRepository.flush();
         }
         return new MigrationBatch(migrated, sessions.hasNext());
+    }
+
+    private static boolean isTokenId(String value) {
+        if (value == null) {
+            return false;
+        }
+        try {
+            return UUID.fromString(value).toString().equals(value);
+        }
+        catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    private static boolean isSha256(String value) {
+        return value != null && SHA_256_PATTERN.matcher(value).matches();
     }
 
     public record MigrationBatch(int migrated, boolean hasNext) {

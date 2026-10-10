@@ -2,15 +2,13 @@ package com.hdfclife.capstoneone.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.hdfclife.capstoneone.auth.dto.AuthResponse;
-import com.hdfclife.capstoneone.auth.dto.LoginRequest;
-import com.hdfclife.capstoneone.common.dto.MessageResponse;
-import com.hdfclife.capstoneone.auth.dto.SignupRequest;
+import com.hdfclife.capstoneone.auth.dto.*;
+import com.hdfclife.capstoneone.auth.service.AuthenticationService.IssuedTokens;
+import com.hdfclife.capstoneone.auth.service.AuthenticationService;
+import com.hdfclife.capstoneone.auth.dto.SignupResponse;
 import com.hdfclife.capstoneone.auth.security.BearerTokenResolver;
 import com.hdfclife.capstoneone.auth.security.RefreshRequestOriginValidator;
 import com.hdfclife.capstoneone.auth.security.RefreshTokenCookieFactory;
-import com.hdfclife.capstoneone.auth.service.AuthService;
-import com.hdfclife.capstoneone.auth.dto.IssuedTokens;
 import com.hdfclife.capstoneone.user.service.UserRegistrationService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AuthControllerTest {
+class AuthenticationControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,7 +42,7 @@ class AuthControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private AuthService authService;
+    private AuthenticationService authenticationService;
 
     @MockBean
     private BearerTokenResolver bearerTokenResolver;
@@ -82,7 +80,7 @@ class AuthControllerTest {
             LoginRequest loginRequest = new LoginRequest("vinayak", "securePassword123");
             IssuedTokens issuedTokens = new IssuedTokens("mock-access-token", "mock-refresh-token");
 
-            given(authService.login(any(LoginRequest.class), any(String.class))).willReturn(issuedTokens);
+            given(authenticationService.login(any(LoginRequest.class), any(String.class))).willReturn(issuedTokens);
             given(refreshTokenCookieFactory.issue("mock-refresh-token")).willReturn(mockIssuedCookie);
 
             mockMvc.perform(post("/login")
@@ -98,7 +96,7 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.accessToken").value("mock-access-token"))
                     .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
-            verify(authService).login(refEq(loginRequest), eq("192.168.1.100"));
+            verify(authenticationService).login(refEq(loginRequest), eq("192.168.1.100"));
             verify(refreshTokenCookieFactory).issue("mock-refresh-token");
         }
     }
@@ -108,10 +106,10 @@ class AuthControllerTest {
     class SignupTests {
 
         @Test
-        @DisplayName("Should register user and return 201 CREATED with MessageResponse")
+        @DisplayName("Should register user and return 201 CREATED with SignupResponse")
         void signupSuccess() throws Exception {
             SignupRequest signupRequest = new SignupRequest("vinayak", "vinayak@example.com", "securePassword123");
-            MessageResponse expectedResponse = new MessageResponse("User registered successfully");
+            SignupResponse expectedResponse = new SignupResponse("User registered successfully");
 
             given(userRegistrationService.register(any(SignupRequest.class))).willReturn(expectedResponse);
 
@@ -130,14 +128,14 @@ class AuthControllerTest {
     class ValidateTokenTests {
 
         @Test
-        @DisplayName("Should resolve bearer token and return 200 OK with AuthResponse")
+        @DisplayName("Should resolve bearer token and return 200 OK with AuthenticationResponse")
         void validateTokenSuccess() throws Exception {
             String rawAuthHeader = "Bearer mock-access-token";
             String resolvedToken = "mock-access-token";
-            AuthResponse expectedAuthResponse = new AuthResponse("vinayak", "ROLE_USER",true);
+            AuthenticationResponse expectedAuthenticationResponse = new AuthenticationResponse("vinayak", "ROLE_USER",true);
 
             given(bearerTokenResolver.resolve(rawAuthHeader)).willReturn(resolvedToken);
-            given(authService.validateToken(resolvedToken)).willReturn(expectedAuthResponse);
+            given(authenticationService.validateToken(resolvedToken)).willReturn(expectedAuthenticationResponse);
 
             mockMvc.perform(get("/auth")
                             .header(HttpHeaders.AUTHORIZATION, rawAuthHeader))
@@ -146,7 +144,7 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.role").value("ROLE_USER"));
 
             verify(bearerTokenResolver).resolve(rawAuthHeader);
-            verify(authService).validateToken(resolvedToken);
+            verify(authenticationService).validateToken(resolvedToken);
         }
     }
 
@@ -162,7 +160,7 @@ class AuthControllerTest {
             IssuedTokens newIssuedTokens = new IssuedTokens("new-access-token", "new-refresh-token");
 
             doNothing().when(refreshRequestOriginValidator).requireAllowed(originHeader);
-            given(authService.refresh(existingRefreshToken)).willReturn(newIssuedTokens);
+            given(authenticationService.refresh(existingRefreshToken)).willReturn(newIssuedTokens);
             given(refreshTokenCookieFactory.issue("new-refresh-token")).willReturn(mockIssuedCookie);
 
             mockMvc.perform(post("/refresh")
@@ -175,7 +173,7 @@ class AuthControllerTest {
                     .andExpect(jsonPath("$.tokenType").value("Bearer"));
 
             verify(refreshRequestOriginValidator).requireAllowed(originHeader);
-            verify(authService).refresh(existingRefreshToken);
+            verify(authenticationService).refresh(existingRefreshToken);
             verify(refreshTokenCookieFactory).issue("new-refresh-token");
         }
     }
@@ -189,11 +187,11 @@ class AuthControllerTest {
         void logoutSuccess() throws Exception {
             String rawAuthHeader = "Bearer mock-access-token";
             String resolvedToken = "mock-access-token";
-            MessageResponse logoutResponse = new MessageResponse("Logout successful");
+            SignupResponse logoutResponse = new SignupResponse("Logout successful");
 
             given(bearerTokenResolver.resolve(rawAuthHeader)).willReturn(resolvedToken);
             given(refreshTokenCookieFactory.clear()).willReturn(mockClearedCookie);
-            given(authService.logout(resolvedToken)).willReturn(logoutResponse);
+            given(authenticationService.logout(resolvedToken)).willReturn(logoutResponse);
 
             mockMvc.perform(post("/logout")
                             .header(HttpHeaders.AUTHORIZATION, rawAuthHeader))
@@ -203,7 +201,7 @@ class AuthControllerTest {
 
             verify(bearerTokenResolver).resolve(rawAuthHeader);
             verify(refreshTokenCookieFactory).clear();
-            verify(authService).logout(resolvedToken);
+            verify(authenticationService).logout(resolvedToken);
         }
     }
 }

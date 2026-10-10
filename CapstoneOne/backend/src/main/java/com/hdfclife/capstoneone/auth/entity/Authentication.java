@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Entity
 @Table(name = "auth_sessions")
-public class AuthSession {
+public class Authentication {
 
     @Setter
     @Id
