@@ -11,11 +11,11 @@
     </appender>
 
     <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/capstone-one.log</file>
-        <filter class="com.hdfclife.capstoneone.audit.logging.AuditEventLogFilter"/>
+        <file>logs/secapp.log</file>
+        <filter class="com.vinayak.secapp.audit.logging.AuditEventLogFilter"/>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/capstone-one.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>logs/secapp.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
@@ -30,7 +30,7 @@
         <appender-ref ref="CONSOLE"/>
     </root>
 
-    <logger name="com.hdfclife.capstoneone" level="INFO" additivity="false">
+    <logger name="com.vinayak.secapp" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ROLLING_FILE"/>
     </logger>

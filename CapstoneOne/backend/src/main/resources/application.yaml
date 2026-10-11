@@ -2,7 +2,7 @@ spring:
   config:
     import: optional:file:.env[.properties]
   application:
-    name: CapstoneOne
+    name: SecApp
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/capstone_one}
     username: ${DB_USERNAME}
@@ -49,9 +49,9 @@ jwt:
   expiration: ${JWT_EXPIRATION:5m}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:16h40m}
   refresh-max-lifetime: ${JWT_REFRESH_MAX_LIFETIME:7d}
-  issuer: ${JWT_ISSUER:capstoneone}
-  access-audience: ${JWT_ACCESS_AUDIENCE:capstoneone-api}
-  refresh-audience: ${JWT_REFRESH_AUDIENCE:capstoneone-refresh}
+  issuer: ${JWT_ISSUER:secapp}
+  access-audience: ${JWT_ACCESS_AUDIENCE:secapp-api}
+  refresh-audience: ${JWT_REFRESH_AUDIENCE:secapp-refresh}
 
 auth:
   refresh-cookie:

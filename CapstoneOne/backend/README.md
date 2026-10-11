@@ -1,6 +1,6 @@
-# CapstoneOne Backend
+# SecApp Backend
 
-This backend provides the secure authentication, user-management, and audit APIs for the CapstoneOne platform. It is built with Java 17, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway, Resilience4j, and OpenAPI/Swagger support.
+This backend provides the secure authentication, user-management, and audit APIs for the SecApp platform. It is built with Java 17, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway, Resilience4j, and OpenAPI/Swagger support.
 
 The service is designed for a production-style internal application flow with:
 
@@ -36,7 +36,7 @@ The backend enforces security at the application boundary instead of trusting UI
 
 ```text
 backend/
-├── src/main/java/com/hdfclife/capstoneone/
+├── src/main/java/com/vinayak/secapp/
 │   ├── auth/            # controller, dto, entity, exception, filter, repository, security, service
 │   ├── user/            # controller, dto, entity, exception, repository, service
 │   ├── audit/           # controller, dto, logging, model, repository, service
@@ -139,9 +139,9 @@ JWT_PREVIOUS_SECRET=
 JWT_EXPIRATION=5m
 JWT_REFRESH_EXPIRATION=16h40m
 JWT_REFRESH_MAX_LIFETIME=7d
-JWT_ISSUER=capstoneone
-JWT_ACCESS_AUDIENCE=capstoneone-api
-JWT_REFRESH_AUDIENCE=capstoneone-refresh
+JWT_ISSUER=secapp
+JWT_ACCESS_AUDIENCE=secapp-api
+JWT_REFRESH_AUDIENCE=secapp-refresh
 
 FRONTEND_ALLOWED_ORIGINS=http://localhost:3000
 AUTH_REFRESH_COOKIE_SECURE=true

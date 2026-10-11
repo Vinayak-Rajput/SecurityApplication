@@ -1,6 +1,6 @@
-# CapstoneOne
+# SecApp
 
-CapstoneOne is a full-stack application for secure user authentication, account administration, and audit visibility. It combines a React/Next.js frontend with a Spring Boot backend and PostgreSQL storage. The platform supports public signup, login, refresh-token rotation, role-based user management, and audit log access.
+SecApp is a full-stack application for secure user authentication, account administration, and audit visibility. It combines a React/Next.js frontend with a Spring Boot backend and PostgreSQL storage. The platform supports public signup, login, refresh-token rotation, role-based user management, and audit log access.
 
 ## Overview
 
